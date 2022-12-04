@@ -6,7 +6,6 @@ import tornado.web
 from aio_pika import Message, connect_robust
 
 
-
 class Base:
     QUEUE: asyncio.Queue
 

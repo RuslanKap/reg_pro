@@ -2,18 +2,11 @@ import asyncio
 import json
 
 import aio_pika
-from fastapi import FastAPI, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import FastAPI
 from database.db import async_session
 from database.models import Posts
 
 app = FastAPI()
-
-
-# Dependency
-async def get_db() -> AsyncSession:
-    async with async_session() as session:
-        yield session
 
 
 @app.on_event("startup")
@@ -45,10 +38,9 @@ async def main(loop):
         )
 
         async with queue.iterator() as queue_iter:
-            # Cancel consuming after __aexit__
+
             async for message in queue_iter:
                 async with message.process():
-                    print(json.loads(message.body))
                     data = json.loads(message.body)
                     session = async_session()
                     post = Posts(**data)
@@ -56,6 +48,5 @@ async def main(loop):
                     await session.commit()
                     await session.close()
 
-                    # await add_user_post(data, session)
                     if queue.name in message.body.decode():
                         break
