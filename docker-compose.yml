@@ -28,6 +28,7 @@ services:
     restart: always
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/postgres
+      - RABBIT_HOST=amqp://guest:guest@rabbitmq:5672
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -41,6 +42,8 @@ services:
     build: backend
     container_name: 'backend'
     restart: always
+    environment:
+      - RABBIT_HOST=amqp://guest:guest@rabbitmq:5672
     ports:
       - "8888:8888"
     depends_on:
