@@ -30,22 +30,16 @@ def read_root():
 
 async def main(loop):
     connection = await aio_pika.connect_robust(
-        # "amqp://guest:guest@rabbitmq:5672/", loop=loop
         RABBIT_HOST, loop=loop
     )
 
     async with connection:
         queue_name = "info"
-
-        # Creating channel
         channel = await connection.channel()
-
-        # Declaring queue
         queue = await channel.declare_queue(
             queue_name,
             auto_delete=True
         )
-
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
@@ -61,5 +55,4 @@ async def main(loop):
                     except TypeError as er:
                         logging.error(f"Error: {er}", exc_info=True)
                         await session.rollback()
-                    if queue.name in message.body.decode():
-                        break
+
