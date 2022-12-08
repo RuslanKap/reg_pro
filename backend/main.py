@@ -35,7 +35,7 @@ class PublisherHandler(tornado.web.RequestHandler):
             body = json.dumps(data)
             logging.info(data)
             await channel.default_exchange.publish(
-                Message(body=body.encode(), content_type="application/json", ), routing_key="info",
+                Message(body=body.encode(), content_type="application/json", ), routing_key="info", timeout=1000
             )
         except ConnectionRefusedError as e:
             logging.error(e)
