@@ -4,7 +4,6 @@ import json
 import logging
 import time
 
-import aio_pika
 from aio_pika import connect_robust
 from fastapi import FastAPI
 from database.db import async_session
@@ -21,8 +20,8 @@ logging.basicConfig(
 
 @app.on_event("startup")
 def startup():
-    # loop = asyncio.get_event_loop()
-    asyncio.ensure_future(main())
+    loop = asyncio.get_event_loop()
+    asyncio.ensure_future(main(loop))
 
 
 @app.get("/")
@@ -30,19 +29,19 @@ def read_root():
     return {"Hello": "World"}
 
 
-async def connect_to_rabbit():
+async def connect_to_rabbit(loop):
     while True:
         try:
             logging.info("Подключаемся к RabbitMQ...")
-            connection = await connect_robust(RABBIT_HOST,) #loop=loop)
+            connection = await connect_robust(RABBIT_HOST, loop=loop)
             return connection
         except ConnectionError:
             time.sleep(5)
             logging.warning("Время попытки подключения истекло. Повторная попытка...")
 
 
-async def main():
-    connection = await connect_to_rabbit()
+async def main(loop):
+    connection = await connect_to_rabbit(loop)
     logging.info("Connected to RabbitMQ!")
     async with connection:
         queue_name = "info"
@@ -66,4 +65,3 @@ async def main():
                     except TypeError as er:
                         logging.error(f"Error: {er}", exc_info=True)
                         await session.rollback()
-
