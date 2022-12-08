@@ -2,8 +2,10 @@ import os
 import asyncio
 import json
 import logging
+import time
 
 import aio_pika
+from aio_pika import connect_robust
 from fastapi import FastAPI
 from database.db import async_session
 from database.models import Posts
@@ -19,8 +21,8 @@ logging.basicConfig(
 
 @app.on_event("startup")
 def startup():
-    loop = asyncio.get_event_loop()
-    asyncio.ensure_future(main(loop))
+    # loop = asyncio.get_event_loop()
+    asyncio.ensure_future(main())
 
 
 @app.get("/")
@@ -28,11 +30,20 @@ def read_root():
     return {"Hello": "World"}
 
 
-async def main(loop):
-    connection = await aio_pika.connect_robust(
-        RABBIT_HOST, loop=loop
-    )
+async def connect_to_rabbit():
+    while True:
+        try:
+            logging.info("Подключаемся к RabbitMQ...")
+            connection = await connect_robust(RABBIT_HOST,) #loop=loop)
+            return connection
+        except ConnectionError:
+            time.sleep(5)
+            logging.warning("Время попытки подключения истекло. Повторная попытка...")
 
+
+async def main():
+    connection = await connect_to_rabbit()
+    logging.info("Connected to RabbitMQ!")
     async with connection:
         queue_name = "info"
         channel = await connection.channel()
